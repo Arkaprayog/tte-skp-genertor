@@ -746,9 +746,8 @@ function getSelectedInstitution() {
 
             name: 'Sentra "Bahagia" di Medan',
 
-            logo:
-                institutionSentra.dataset.logo ||
-                "assets/logo-kemensos.png"
+            logo : "assets/logo-kemensos.png"
+                
         };
 
     }
@@ -765,9 +764,8 @@ function getSelectedInstitution() {
             name:
                 "Sekolah Rakyat Menengah Pertama 2 Medan",
 
-            logo:
-                institutionSekolahRakyat.dataset.logo ||
-                "assets/logo-sekolah-rakyat.png"
+            logo: "assets/logo-sekolah-rakyat.png"
+                
         };
 
     }
