@@ -35,9 +35,6 @@ const generateButton =
 const qrCodeContainer =
     document.getElementById("qrCodeContainer");
 
-const qrLogo =
-    document.getElementById("qrLogo");
-
 const previewName =
     document.getElementById("previewName");
 
@@ -50,7 +47,8 @@ const previewPosition =
 const previewInstitution =
     document.getElementById("previewInstitution");
 
-const downloadPdfButton =
+const downloadPngButton =
+    document.getElementById("downloadPngButton") ||
     document.getElementById("downloadPdfButton");
 
 
@@ -75,8 +73,6 @@ let currentInstitutionLogo = null;
 
 let qrLibraryPromise = null;
 
-let pdfLibraryPromise = null;
-
 let isGenerating = false;
 
 
@@ -85,10 +81,7 @@ let isGenerating = false;
    ========================================================= */
 
 const QR_LIBRARY_URL =
-    "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
-
-const PDF_LIBRARY_URL =
-    "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    "assets/qrcode.min.js";
 
 
 /* =========================================================
@@ -189,34 +182,6 @@ function loadQrLibrary() {
     return qrLibraryPromise;
 }
 
-
-/* =========================================================
-   LOAD PDF LIBRARY
-   ========================================================= */
-
-function loadPdfLibrary() {
-
-    if (
-        window.jspdf &&
-        window.jspdf.jsPDF
-    ) {
-        return Promise.resolve();
-    }
-
-    if (!pdfLibraryPromise) {
-
-        pdfLibraryPromise =
-            loadScript(
-                PDF_LIBRARY_URL,
-                () =>
-                    window.jspdf &&
-                    typeof window.jspdf.jsPDF === "function"
-            );
-
-    }
-
-    return pdfLibraryPromise;
-}
 
 
 /* =========================================================
@@ -909,16 +874,31 @@ function loadImage(src) {
         const image =
             new Image();
 
-        image.crossOrigin = "anonymous";
+        if (window.location.protocol !== "file:") {
+            image.crossOrigin = "anonymous";
+        }
 
         image.onload = () => resolve(image);
 
-        image.onerror = () =>
-            reject(
-                new Error(
-                    `Logo tidak dapat dimuat: ${src}`
-                )
-            );
+        image.onerror = () => {
+            if (image.crossOrigin) {
+                const retry = new Image();
+                retry.onload = () => resolve(retry);
+                retry.onerror = () =>
+                    reject(
+                        new Error(
+                            `Logo tidak dapat dimuat: ${src}`
+                        )
+                    );
+                retry.src = src;
+            } else {
+                reject(
+                    new Error(
+                        `Logo tidak dapat dimuat: ${src}`
+                    )
+                );
+            }
+        };
 
         image.src = src;
 
@@ -1377,26 +1357,14 @@ async function generateQRCode(data) {
     }
 
 
-    /*
-     * Jangan menampilkan logo kedua
-     * di luar QR.
-     */
-
-    if (qrLogo) {
-
-        qrLogo.hidden = true;
-
-        qrLogo.removeAttribute("src");
-
-    }
 
 
     /*
-     * Aktifkan tombol PDF.
+     * Aktifkan tombol PNG.
      */
 
-    if (downloadPdfButton) {
-        downloadPdfButton.disabled = false;
+    if (downloadPngButton) {
+        downloadPngButton.disabled = false;
     }
 
 
@@ -1495,8 +1463,8 @@ async function handleGenerate() {
         }
 
 
-        if (downloadPdfButton) {
-            downloadPdfButton.disabled = true;
+        if (downloadPngButton) {
+            downloadPngButton.disabled = true;
         }
 
     } finally {
@@ -1520,91 +1488,23 @@ async function handleGenerate() {
 
 
 /* =========================================================
-   CREATE PDF
+   DOWNLOAD BARCODE PNG
    ========================================================= */
 
-async function generatePdf() {
+function downloadBarcodePng() {
 
-    if (!currentQrDataUrl) {
+    if (
+        !currentQrCanvas ||
+        !currentQrDataUrl
+    ) {
 
         showMessage(
-            "Buat QR Code terlebih dahulu.",
+            "Silakan generate QR Code terlebih dahulu.",
             "warning"
         );
 
         return;
     }
-
-
-    try {
-
-        await loadPdfLibrary();
-
-    } catch (error) {
-
-        showMessage(
-            "PDF tidak dapat dibuat karena library PDF gagal dimuat.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    const jsPDF =
-        window.jspdf.jsPDF;
-
-
-    /*
-     * A4 portrait.
-     * QR akan diletakkan di tengah.
-     */
-
-    const pdf =
-        new jsPDF({
-            orientation: "portrait",
-            unit: "mm",
-            format: "a4"
-        });
-
-
-    /*
-     * Ukuran QR.
-     */
-
-    const qrSize = 150;
-
-
-    const pageWidth =
-        pdf.internal.pageSize.getWidth();
-
-    const pageHeight =
-        pdf.internal.pageSize.getHeight();
-
-
-    const x =
-        (pageWidth - qrSize) / 2;
-
-    const y =
-        (pageHeight - qrSize) / 2;
-
-
-    /*
-     * PDF HANYA berisi QR.
-     *
-     * Logo sudah berada di tengah
-     * QR pada currentQrDataUrl.
-     */
-
-    pdf.addImage(
-        currentQrDataUrl,
-        "PNG",
-        x,
-        y,
-        qrSize,
-        qrSize
-    );
 
 
     /*
@@ -1628,19 +1528,74 @@ async function generatePdf() {
         nip = "pegawai";
     }
 
+    const filename = `barcode-${nip}.png`;
 
-    pdf.save(
-        `barcode-${nip}.pdf`
+    try {
+        if (currentQrCanvas && typeof currentQrCanvas.toBlob === "function") {
+            currentQrCanvas.toBlob((blob) => {
+                if (!blob) {
+                    fallbackDownloadBarcodePng(filename);
+                    return;
+                }
+
+                const blobUrl = URL.createObjectURL(blob);
+                const downloadLink = document.createElement("a");
+                downloadLink.href = blobUrl;
+                downloadLink.download = filename;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+
+                setTimeout(() => {
+                    URL.revokeObjectURL(blobUrl);
+                }, 1000);
+
+                showMessage(
+                    "Barcode PNG berhasil diunduh.",
+                    "success"
+                );
+            }, "image/png");
+        } else {
+            fallbackDownloadBarcodePng(filename);
+        }
+    } catch (error) {
+        console.error("Gagal mendownload PNG:", error);
+        fallbackDownloadBarcodePng(filename);
+    }
+
+}
+
+
+function fallbackDownloadBarcodePng(filename) {
+
+    if (!currentQrDataUrl) {
+        showMessage(
+            "Gagal mengunduh gambar barcode.",
+            "error"
+        );
+        return;
+    }
+
+    const downloadLink = document.createElement("a");
+    downloadLink.href = currentQrDataUrl;
+    downloadLink.download = filename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+
+    showMessage(
+        "Barcode PNG berhasil diunduh.",
+        "success"
     );
 
 }
 
 
 /* =========================================================
-   DOWNLOAD PDF BUTTON
+   DOWNLOAD PNG BUTTON
    ========================================================= */
 
-function handleDownloadPdf() {
+function handleDownloadPng() {
 
     if (
         !currentQrCanvas ||
@@ -1656,7 +1611,7 @@ function handleDownloadPdf() {
     }
 
 
-    generatePdf();
+    downloadBarcodePng();
 
 }
 
@@ -1837,8 +1792,8 @@ function clearCurrentQr() {
     currentInstitutionLogo = null;
 
 
-    if (downloadPdfButton) {
-        downloadPdfButton.disabled = true;
+    if (downloadPngButton) {
+        downloadPngButton.disabled = true;
     }
 
 }
@@ -1913,11 +1868,11 @@ if (generateButton) {
 }
 
 
-if (downloadPdfButton) {
+if (downloadPngButton) {
 
-    downloadPdfButton.addEventListener(
+    downloadPngButton.addEventListener(
         "click",
-        handleDownloadPdf
+        handleDownloadPng
     );
 
 }
@@ -1980,12 +1935,12 @@ if (institutionSekolahRakyat) {
 function initialize() {
 
     /*
-     * Pastikan PDF disabled
+     * Pastikan tombol download disabled
      * sebelum QR dibuat.
      */
 
-    if (downloadPdfButton) {
-        downloadPdfButton.disabled = true;
+    if (downloadPngButton) {
+        downloadPngButton.disabled = true;
     }
 
 
@@ -2027,14 +1982,6 @@ function initialize() {
     });
 
 
-    loadPdfLibrary().catch(error => {
-
-        console.warn(
-            "PDF library belum tersedia:",
-            error
-        );
-
-    });
 
 }
 
