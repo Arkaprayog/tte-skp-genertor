@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Generator TTE & Barcode Pegawai</title>
+
+    <meta
+        name="description"
+        content="Generator TTE dan Barcode Pegawai dengan logo instansi"
+    >
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- ================= HEADER ================= -->
+    <header class="site-header">
+        <div class="container header-content">
+
+            <div class="brand">
+                <div class="brand-icon">
+                    QR
+                </div>
+
+                <div>
+                    <h1>Generator TTE & Barcode Pegawai</h1>
+                    <p>
+                        Buat Tanda Tangan Elektronik dan Barcode
+                        dengan Logo Instansi
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+
+    <!-- ================= MAIN ================= -->
+    <main class="container main-content">
+
+        <div class="page-grid">
+
+            <!-- =========================================
+                 KOLOM KIRI
+            ========================================== -->
+            <section class="form-card">
+
+                <div class="card-header">
+                    <h2>Data Pegawai</h2>
+                    <p>
+                        Lengkapi data pegawai untuk membuat
+                        TTE dan QR Code.
+                    </p>
+                </div>
+
+
+                <!-- DATA PEGAWAI -->
+                <form id="tteForm">
+
+                    <div class="form-group">
+
+                        <label for="employeeName">
+                            Nama Pegawai
+                            <span class="required">*</span>
+                        </label>
+
+                        <input
+                            type="text"
+                            id="employeeName"
+                            name="employeeName"
+                            placeholder="Masukkan nama lengkap pegawai"
+                            autocomplete="name"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="employeeNip">
+                            NIP
+                            <span class="required">*</span>
+                        </label>
+
+                        <input
+                            type="text"
+                            id="employeeNip"
+                            name="employeeNip"
+                            placeholder="Masukkan NIP"
+                            inputmode="numeric"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="employeePosition">
+                            Jabatan
+                            <span class="required">*</span>
+                        </label>
+
+                        <input
+                            type="text"
+                            id="employeePosition"
+                            name="employeePosition"
+                            placeholder="Masukkan jabatan"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- =====================================
+                         INSTANSI
+                    ====================================== -->
+
+                    <fieldset class="institution-section">
+
+                        <legend>Instansi</legend>
+
+                        <p class="section-description">
+                            Pilih instansi pegawai.
+                        </p>
+
+
+                        <!-- SENTRA BAHAGIA -->
+
+                        <label
+                            class="institution-option"
+                            for="institutionSentra"
+                        >
+
+                            <input
+                                type="radio"
+                                id="institutionSentra"
+                                name="institution"
+                                value="sentra-bahagia"
+                                data-logo="assets/logo-kemensos.png"
+                            >
+
+                            <span class="radio-custom"></span>
+
+                            <span class="institution-text">
+                                <strong>
+                                    Sentra "Bahagia" di Medan
+                                </strong>
+
+                                <small>
+                                    Kementerian Sosial Republik Indonesia
+                                </small>
+                            </span>
+
+                        </label>
+
+
+                        <!-- SEKOLAH RAKYAT -->
+
+                        <label
+                            class="institution-option"
+                            for="institutionSekolahRakyat"
+                        >
+
+                            <input
+                                type="radio"
+                                id="institutionSekolahRakyat"
+                                name="institution"
+                                value="sekolah-rakyat"
+                                data-logo="assets/logo-sekolah-rakyat.png"
+                            >
+
+                            <span class="radio-custom"></span>
+
+                            <span class="institution-text">
+                                <strong>
+                                    Sekolah Rakyat Menengah Pertama 2 Medan
+                                </strong>
+
+                                <small>
+                                    Sekolah Rakyat
+                                </small>
+                            </span>
+
+                        </label>
+
+                    </fieldset>
+
+
+                    <!-- =====================================
+                         TANDA TANGAN
+                    ====================================== -->
+
+                    <section class="signature-section">
+
+                        <div class="section-title">
+
+                            <div>
+                                <h3>Tanda Tangan</h3>
+
+                                <p>
+                                    Buat tanda tangan Anda pada
+                                    area di bawah ini.
+                                </p>
+                            </div>
+
+                        </div>
+
+
+                        <div class="signature-wrapper">
+
+                            <canvas
+                                id="signatureCanvas"
+                                aria-label="Area untuk membuat tanda tangan"
+                            ></canvas>
+
+                            <div class="signature-placeholder">
+                                Buat tanda tangan di sini
+                            </div>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            id="clearSignature"
+                            class="secondary-button"
+                        >
+                            Hapus Coretan Canvas
+                        </button>
+
+                    </section>
+
+
+                    <!-- =====================================
+                         MESSAGE
+                    ====================================== -->
+
+                    <div
+                        id="message"
+                        class="message"
+                        role="alert"
+                        aria-live="polite"
+                    ></div>
+
+
+                    <!-- =====================================
+                         GENERATE
+                    ====================================== -->
+
+                    <button
+                        type="button"
+                        id="generateButton"
+                        class="primary-button"
+                    >
+
+                        <span class="button-icon">
+                            ◈
+                        </span>
+
+                        Generate TTE & QR Code
+
+                    </button>
+
+                </form>
+
+            </section>
+
+
+            <!-- =========================================
+                 KOLOM KANAN / PREVIEW
+            ========================================== -->
+
+            <section class="preview-card">
+
+                <div class="card-header">
+
+                    <h2>Preview Hasil</h2>
+
+                    <p>
+                        QR Code akan menampilkan logo
+                        instansi yang dipilih.
+                    </p>
+
+                </div>
+
+
+                <!-- QR CODE -->
+
+                <div
+                    id="qrPreview"
+                    class="qr-preview"
+                >
+
+                    <div
+                        id="qrCodeContainer"
+                        class="qr-code-container"
+                    >
+
+                        <div class="qr-placeholder">
+
+                            <div class="qr-placeholder-icon">
+                                QR
+                            </div>
+
+                            <p>
+                                QR Code akan muncul
+                                setelah data dibuat.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- LOGO INSTANSI -->
+
+                <img
+                    id="qrLogo"
+                    class="qr-logo"
+                    src=""
+                    alt="Logo instansi"
+                    hidden
+                >
+
+
+                <!-- =====================================
+                     INFORMASI PREVIEW
+                ====================================== -->
+
+                <div
+                    id="previewInformation"
+                    class="preview-information"
+                >
+
+                    <div class="preview-row">
+
+                        <span>
+                            Nama Pegawai
+                        </span>
+
+                        <strong id="previewName">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div class="preview-row">
+
+                        <span>
+                            NIP
+                        </span>
+
+                        <strong id="previewNip">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div class="preview-row">
+
+                        <span>
+                            Jabatan
+                        </span>
+
+                        <strong id="previewPosition">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div class="preview-row">
+
+                        <span>
+                            Instansi
+                        </span>
+
+                        <strong id="previewInstitution">
+                            -
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =====================================
+                     DOWNLOAD
+                ====================================== -->
+
+                <div class="download-section">
+
+                    <button
+                        type="button"
+                        id="downloadPdfButton"
+                        class="download-button"
+                        disabled
+                    >
+
+                        <span class="button-icon">
+                            PDF
+                        </span>
+
+                        Download Barcode (PDF)
+
+                    </button>
+
+
+                    <p class="download-description">
+
+                        PDF hanya berisi QR Code dan
+                        logo instansi.
+
+                    </p>
+
+                </div>
+
+
+                <!-- INFO -->
+
+                <div class="info-box">
+
+                    <div class="info-icon">
+                        i
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Informasi
+                        </strong>
+
+                        <p>
+                            QR Code akan dibuat dengan
+                            tingkat koreksi tinggi sehingga
+                            logo dapat ditempatkan di
+                            bagian tengah QR Code.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+
+    <!-- ================= FOOTER ================= -->
+
+    <footer class="site-footer">
+
+        <div class="container">
+
+            <p>
+                Generator TTE & Barcode Pegawai
+            </p>
+
+            <p>
+                © 2026
+            </p>
+
+        </div>
+
+    </footer>
+
+
+    <!-- ================= JAVASCRIPT ================= -->
+
+    <script src="script.js"></script>
+
+</body>
+</html>
